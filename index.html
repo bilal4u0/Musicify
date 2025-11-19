@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Spotify - Web Player</title>
+    <script src="https://cdn.lordicon.com/lordicon.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@400..800&family=Martel+Sans:wght@200;300;400;600;700;800;900&family=Poppins:wght@300;400;500;600;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            font-family: sans-serif;
+            color: white;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: black;
+            color: white;
+            overflow-x: hidden;
+        }
+
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            cursor: pointer;
+            padding: 10px;
+            z-index: 1000;
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: #1f1f1f;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .hamburger span {
+            width: 25px;
+            height: 3px;
+            background: white;
+            border-radius: 3px;
+            transition: all 0.3s ease;
+        }
+
+        .hamburger.active span:nth-child(1) {
+            transform: rotate(45deg) translate(8px, 8px);
+        }
+
+        .hamburger.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .hamburger.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(7px, -7px);
+        }
+
+        .left {
+            width: 25vw;
+            padding: 10px;
+            transition: transform 0.3s ease;
+        }
+
+        .right {
+            width: 75vw;
+            transition: all 0.3s ease;
+        }
+
+        .home ul li {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding-top: 14px;
+            list-style: none;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .home ul li:hover {
+            opacity: 0.7;
+            transform: translateX(5px);
+        }
+
+        .library {
+            min-height: 85vh;
+            position: relative;
+        }
+
+        .footer {
+            position: absolute;
+            bottom: 0;
+            color: gray;
+            font-size: 11px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            padding: 10px 0;
+        }
+
+        .footer a {
+            color: gray;
+            transition: color 0.3s ease;
+        }
+
+        .footer a:hover {
+            color: white;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            background: rgb(44, 43, 43);
+            border-radius: 8px;
+            height: 54px;
+            transition: all 0.3s ease;
+        }
+
+        .header>* {
+            padding: 10px;
+        }
+
+        .nav svg {
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .nav svg:hover {
+            transform: scale(1.1);
+        }
+
+        .buttons button {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .signupbtn {
+            background: transparent;
+            margin-right: 10px;
+        }
+
+        .signupbtn:hover {
+            transform: scale(1.05);
+        }
+
+        .loginbtn {
+            background: white;
+            color: black;
+        }
+
+        .loginbtn:hover {
+            transform: scale(1.05);
+            background: #1ed760;
+        }
+
+        .spotifyPlaylists {
+            padding: 20px;
+        }
+
+        .cardcontainer {
+            margin: 30px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: nowrap;
+        }
+
+        .card {
+            width: 200px;
+            height: 200px;
+            padding: 10px;
+            border-radius: 5px;
+            background: #252525;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            background: #303030;
+            transform: scale(1.05);
+        }
+
+        .card img {
+            width: 100%;
+            border-radius: 5px;
+        }
+
+        .card h2 {
+            font-size: 16px;
+            margin-top: 10px;
+        }
+
+        .card p {
+            font-size: 12px;
+            color: #b3b3b3;
+            margin-top: 5px;
+        }
+
+        .play {
+            width: 28px;
+            height: 28px;
+            background: #15c115;
+            border-radius: 50%;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            top: 168px;
+            right: 17px;
+            opacity: 0;
+            transition: all 0.4s ease;
+        }
+
+        .card:hover .play {
+            opacity: 1;
+            top: 150px;
+        }
+
+        .songList {
+            height: 430px;
+            overflow-y: auto;
+        }
+
+        .songList::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .songList::-webkit-scrollbar-track {
+            background: #1c1c1c;
+            border-radius: 10px;
+        }
+
+        .songList::-webkit-scrollbar-thumb {
+            background: #444;
+            border-radius: 10px;
+        }
+
+        .songList::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        .songList ul li {
+            list-style: none;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            cursor: pointer;
+            padding: 8px 10px;
+            margin: 5px 0;
+            width: 340px;
+            min-height: 45px;
+            border: 1px solid #444;
+            border-radius: 10px;
+            background: #1c1c1c;
+            transition: all 0.25s ease;
+        }
+
+        .songList ul li:hover {
+            background: #292929;
+            transform: scale(1.03);
+            border-color: #777;
+        }
+
+        .songList ul li:active {
+            transform: scale(0.98);
+        }
+
+        .songList ul li img {
+            width: 27px;
+            filter: invert(1);
+        }
+
+        .info {
+            flex: 1;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+
+        .info div:first-child {
+            font-size: 13px;
+            font-weight: 600;
+            opacity: 0.95;
+        }
+
+        .info div:last-child {
+            font-size: 10px;
+            opacity: 0.6;
+        }
+
+        .playnow {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            min-width: 60px;
+            justify-content: flex-end;
+        }
+
+        .playnow img {
+            width: 16px;
+            opacity: 0.9;
+            transition: opacity 0.3s ease;
+        }
+
+        .playnow:hover img {
+            opacity: 1;
+        }
+
+        .playnow span {
+            font-size: 11px;
+            opacity: 0.7;
+        }
+
+        .playbar {
+            position: fixed;
+            bottom: 20px;
+            width: 74vw;
+            height: 60px;
+            padding: 12px 0;
+            background: #dad5d5;
+            border-radius: 40px;
+            filter: invert(1);
+            transition: all 0.3s ease;
+        }
+
+        .abovebar {
+            display: flex;
+            justify-content: space-between;
+            padding: 0 25px;
+            align-items: center;
+            position: relative;
+        }
+
+        .songbuttons {
+            display: flex;
+            gap: 14px;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .songbuttons img {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .songbuttons img:hover {
+            transform: scale(1.2);
+        }
+
+        .songbuttons img:active {
+            transform: scale(0.9);
+        }
+
+        .seekbar {
+            height: 2px;
+            width: 98%;
+            background: red;
+            border-radius: 20px;
+            position: absolute;
+            bottom: 13px;
+            left: 1%;
+            cursor: pointer;
+            transition: height 0.2s ease;
+        }
+
+        .seekbar:hover {
+            height: 4px;
+        }
+
+        .circle {
+            width: 17px;
+            height: 17px;
+            background: black;
+            border-radius: 50%;
+            position: absolute;
+            bottom: -7px;
+            left: 0px;
+            transition: all 0.2s ease;
+        }
+
+        .seekbar:hover .circle {
+            transform: scale(1.2);
+        }
+
+        .flex {
+            display: flex;
+        }
+
+        .bg-grey {
+            background: #1f1f1f;
+        }
+
+        .rounded {
+            border-radius: 8px;
+        }
+
+        .invert {
+            filter: invert(1);
+        }
+
+        .songinfo,
+        .songtime {
+            color: black;
+        }
+
+        /* RESPONSIVE STYLES */
+        @media (max-width: 768px) {
+            .hamburger {
+                display: flex;
+            }
+
+            .container {
+                flex-direction: column;
+            }
+
+            #sidebar {
+                display: flex;
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .home {
+                display: flex;
+                flex-direction: column;
+                justify-content: between;
+                padding-bottom: 20px;
+            }
+
+            .left {
+
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 280px;
+                height: 100vh;
+                z-index: 999;
+                background: black;
+                transform: translateX(-100%);
+                padding: 70px 10px 10px 10px;
+
+
+            }
+
+            .left.active {
+                transform: translateX(0);
+            }
+
+            .right {
+                width: 100vw;
+                margin-top: 0;
+            }
+
+            .header {
+                margin-top: 60px;
+            }
+
+            .buttons {
+                display: none;
+            }
+
+            .spotifyPlaylists {
+                padding: 15px;
+                height: 88vh;
+            }
+
+            .spotifyPlaylists h1 {
+                font-size: 24px;
+
+            }
+
+            .cardcontainer {
+                margin: 15px 0;
+                gap: 15px;
+                padding: 0 10px;
+                flex-direction: column;
+                height: auto;
+            }
+
+            .card {
+                width: 100%;
+                height: 80%;
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                gap: 15px;
+                padding: 10px;
+            }
+
+            .card img {
+                width: 100px;
+                height: 100px;
+                object-fit: cover;
+                flex-shrink: 0;
+            }
+
+            .card-content {
+                flex: 1;
+                text-align: left;
+            }
+
+            .card h2 {
+                font-size: 16px;
+                margin-bottom: 5px;
+            }
+
+            .card p {
+                font-size: 12px;
+            }
+
+            .play {
+                top: 50%;
+                right: 20px;
+                transform: translateY(-50%);
+                width: 40px;
+                height: 40px;
+            }
+
+            .card:hover .play {
+                opacity: 1;
+                top: 50%;
+                transform: translateY(-50%) scale(1.1);
+            }
+
+            .songList {
+                height: 350px;
+            }
+
+            .songList ul li {
+                width: 100%;
+                max-width: 100%;
+            }
+
+            .playbar {
+                width: calc(100vw - 40px);
+                left: 20px;
+                bottom: 10px;
+            }
+
+            .abovebar {
+                padding: 0 15px;
+            }
+
+            .songbuttons {
+                gap: 10px;
+            }
+
+            .songbuttons img {
+                width: 20px;
+            }
+
+            .songinfo {
+                font-size: 12px;
+                max-width: 100px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .songtime {
+                font-size: 10px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .card {
+                min-width: 120px;
+                flex-shrink: 0;
+            }
+
+            .card h2 {
+                font-size: 14px;
+            }
+
+            .card p {
+                font-size: 11px;
+            }
+
+            .buttons button {
+                padding: 6px 15px;
+                font-size: 12px;
+            }
+
+            .signupbtn {
+                margin-right: 5px;
+            }
+
+            .songbuttons {
+                gap: 8px;
+            }
+
+            .songbuttons img {
+                width: 18px;
+            }
+
+            .songinfo {
+                max-width: 80px;
+                font-size: 11px;
+            }
+
+            .songtime {
+                font-size: 9px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="hamburger" onclick="toggleMenu()">
+        <span></span>
+        <span></span>
+        <span></span>
+    </div>
+
+    <div class="container flex">
+
+        <!-- LEFT PANEL -->
+        <div class="left" id="sidebar">
+            <div class="home bg-grey rounded p-3">
+                <div class="logo"><img width="120" class="invert" src="logo.svg" alt="logo"></div>
+                <ul>
+                    <li><img class="invert" src="home.svg" width="23px" alt="home">Home</li>
+                </ul>
+            </div>
+
+            <div class="library bg-grey rounded p-1">
+                <h2 style="padding: 18px;">Your Library</h2>
+
+                <div class="songList">
+                    <ul></ul>
+                </div>
+
+                <div class="footer">
+                    <div><a href="#">Legal</a></div>
+                    <div><a href="#">Privacy</a></div>
+                    <div><a href="#">Cookies</a></div>
+                    <div><a href="#">About Ads</a></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT PANEL -->
+        <div class="right bg-grey rounded">
+
+            <div class="header">
+                <div class="nav">
+                    <svg width="24" height="24">
+                        <path d="M15 6L9 12L15 18" stroke="white" stroke-width="1.5" />
+                    </svg>
+                </div>
+
+                <div class="buttons">
+                    <button class="signupbtn">Sign up</button>
+                    <button class="loginbtn">Log in</button>
+                </div>
+            </div>
+
+            <div class="spotifyPlaylists">
+                <h1>Spotify Playlists</h1>
+                <div class="cardcontainer">
+
+                    <div class="card" data-pl="Happy Hits">
+                        <div class="play">
+                            <lord-icon src="https://cdn.lordicon.com/rfoqztsr.json" trigger="hover"
+                                style="width:250px;height:250px">
+                            </lord-icon>
+                        </div>
+                        <img src="fujikaza.png" alt="cover">
+                        <div class="card-content">
+                            <h2>Happy Hits!</h2>
+                            <p>Boost your mood instantly.</p>
+                        </div>
+                    </div>
+
+                    <div class="card" data-pl="Jazz Sleep">
+                        <div class="play">
+                            <lord-icon src="https://cdn.lordicon.com/rfoqztsr.json" trigger="hover"
+                                style="width:250px;height:250px">
+                            </lord-icon>
+                        </div>
+                        <img src="cover.jpg" alt="cover">
+                        <div class="card-content">
+                            <h2>Jazz Sleep</h2>
+                            <p>Relax and fall asleep fast.</p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- PLAYER -->
+            <div class="playbar">
+
+                <div class="seekbar" id="seekbar">
+                    <div class="circle" id="circle"></div>
+                </div>
+
+                <div class="abovebar">
+                    <div class="songinfo" id="songinfo"></div>
+
+                    <div class="songbuttons">
+                        <img id="previous" src="prevsong.svg" width="24" alt="prev">
+                        <img id="play" src="play.svg" width="24" alt="play">
+                        <img id="next" src="nextsong.svg" width="24" alt="next">
+                    </div>
+
+                    <div class="songtime" id="songtime"></div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT -->
+    <script>
+        // Audio player
+        const currentSong = new Audio();
+
+        // Playlists
+        const PLAYLISTS = {
+            "Happy Hits": [
+                "295.mp3",
+                "Bye Bye Bye.mp3",
+                "Courtesy-Call.mp3"
+            ],
+            "Jazz Sleep": [
+                "After Dark.mp3",
+                "Chk Chk Boom.mp3",
+                "Don't-Be-Shy-Girl.mp3"
+            ]
+        };
+
+        // state
+        let currentPlaylist = "Happy Hits";
+        let songs = [...PLAYLISTS[currentPlaylist]]; // copy
+        let isSeeking = false;
+
+        // DOM
+        const sidebar = document.getElementById('sidebar');
+        const hamburger = document.querySelector('.hamburger');
+        const ulSongList = document.querySelector(".songList ul");
+        const playBtn = document.getElementById('play');
+        const nextBtn = document.getElementById('next');
+        const prevBtn = document.getElementById('previous');
+        const songinfoEl = document.getElementById('songinfo');
+        const songtimeEl = document.getElementById('songtime');
+        const seekbarEl = document.getElementById('seekbar');
+        const circleEl = document.getElementById('circle');
+
+        function toggleMenu() {
+            sidebar.classList.toggle('active');
+            hamburger.classList.toggle('active');
+        }
+
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', (e) => {
+            if (window.innerWidth <= 768) {
+                if (!sidebar.contains(e.target) && !hamburger.contains(e.target) && sidebar.classList.contains('active')) {
+                    sidebar.classList.remove('active');
+                    hamburger.classList.remove('active');
+                }
+            }
+        });
+
+        function secondsToMS(sec) {
+            if (!isFinite(sec) || isNaN(sec)) return "00:00";
+            const m = Math.floor(sec / 60).toString().padStart(2, "0");
+            const s = Math.floor(sec % 60).toString().padStart(2, "0");
+            return `${m}:${s}`;
+        }
+
+        function safeFilename(name) {
+            // Keep exact string matching as in songs array
+            return name;
+        }
+
+        function getFilenameFromSrc(src) {
+            try {
+                const raw = src.split('/').pop();
+                return decodeURIComponent(raw || "");
+            } catch {
+                return "";
+            }
+        }
+
+        function renderSongList() {
+            songs = [...PLAYLISTS[currentPlaylist]]; // refresh list
+            ulSongList.innerHTML = "";
+
+            songs.forEach(song => {
+                const li = document.createElement('li');
+                li.setAttribute('data-song', song);
+                li.innerHTML = `
+                    <img class="invert" src="music.svg" alt="music">
+                    <div class="info">
+                        <div>${song}</div>
+                        <div>Bilal</div>
+                    </div>
+                    <div class="playnow">
+                        <span>Play</span>
+                        <img class="invert" src="play.svg" alt="play">
+                    </div>
+                `;
+                li.addEventListener("click", () => {
+                    playMusic(li.dataset.song, false);
+                    // Close sidebar on mobile after selecting a song
+                    if (window.innerWidth <= 768) {
+                        toggleMenu();
+                    }
+                });
+                ulSongList.appendChild(li);
+            });
+        }
+
+        function playMusic(track, pause = false) {
+            if (!track) return;
+            // set source
+            currentSong.src = "songs/" + track;
+            currentSong.currentTime = 0;
+
+            // update UI immediately
+            songinfoEl.textContent = track;
+            songtimeEl.textContent = "00:00 / 00:00";
+            setSeekPosition(0);
+
+            if (!pause) {
+                currentSong.play().catch(err => {
+                    // autoplay might be blocked by browser; keep UI consistent
+                    console.warn("play() failed:", err);
+                });
+                playBtn.src = "pause.svg";
+            } else {
+                playBtn.src = "play.svg";
+            }
+        }
+
+        function setSeekPosition(percent) {
+            // clamp
+            percent = Math.max(0, Math.min(1, percent));
+            const pct = percent * 100 + "%";
+            circleEl.style.left = pct;
+        }
+
+        function getCurrentIndex() {
+            const filename = getFilenameFromSrc(currentSong.src);
+            let idx = songs.findIndex(s => s === filename);
+            if (idx === -1) {
+                // fallback: sometimes currentSong.src may be empty or external - try matching by decode
+                idx = 0;
+            }
+            return idx;
+        }
+
+        // Hook up playlist cards
+        document.querySelectorAll(".card").forEach(card => {
+            card.addEventListener("click", () => {
+                currentPlaylist = card.dataset.pl;
+                renderSongList();
+                // play first track of chosen playlist but don't autoplay
+                playMusic(PLAYLISTS[currentPlaylist][0], true);
+            });
+        });
+
+        // Play/pause
+        playBtn.addEventListener("click", () => {
+            if (currentSong.paused) {
+                currentSong.play().catch(err => console.warn("play failed:", err));
+                playBtn.src = "pause.svg";
+            } else {
+                currentSong.pause();
+                playBtn.src = "play.svg";
+            }
+        });
+
+        // Next
+        nextBtn.addEventListener("click", () => {
+            if (!songs || songs.length === 0) return;
+            let i = getCurrentIndex();
+            // recompute in case song list changed
+            i = (i + 1) % songs.length;
+            playMusic(songs[i], false);
+        });
+
+        // Previous
+        prevBtn.addEventListener("click", () => {
+            if (!songs || songs.length === 0) return;
+            let i = getCurrentIndex();
+            i = (i - 1 + songs.length) % songs.length;
+            playMusic(songs[i], false);
+        });
+
+        // Update time and seekbar
+        currentSong.addEventListener("timeupdate", () => {
+            const duration = currentSong.duration;
+            const current = currentSong.currentTime;
+
+            if (!isFinite(duration) || isNaN(duration) || duration === 0) {
+                songtimeEl.textContent = `${secondsToMS(current)} / 00:00`;
+                setSeekPosition(0);
+                return;
+            }
+
+            songtimeEl.textContent = `${secondsToMS(current)} / ${secondsToMS(duration)}`;
+
+            const percent = duration ? (current / duration) : 0;
+            setSeekPosition(percent);
+        });
+
+        // Seekbar click (robust to clicking child elements)
+        seekbarEl.addEventListener("click", (e) => {
+            const rect = seekbarEl.getBoundingClientRect();
+            const clickX = e.clientX;
+            const percent = (clickX - rect.left) / rect.width;
+            if (!isFinite(currentSong.duration) || isNaN(currentSong.duration)) return;
+            currentSong.currentTime = Math.max(0, Math.min(1, percent)) * currentSong.duration;
+            setSeekPosition(percent);
+        });
+
+        // Optional: allow drag of the circle (simple implementation)
+        circleEl.addEventListener("mousedown", (e) => {
+            isSeeking = true;
+            e.preventDefault();
+        });
+        document.addEventListener("mouseup", () => {
+            if (isSeeking) {
+                isSeeking = false;
+            }
+        });
+        document.addEventListener("mousemove", (e) => {
+            if (!isSeeking) return;
+            const rect = seekbarEl.getBoundingClientRect();
+            let percent = (e.clientX - rect.left) / rect.width;
+            percent = Math.max(0, Math.min(1, percent));
+            setSeekPosition(percent);
+            if (isFinite(currentSong.duration) && !isNaN(currentSong.duration)) {
+                currentSong.currentTime = percent * currentSong.duration;
+            }
+        });
+
+        // If a track ends, auto-advance to next
+        currentSong.addEventListener("ended", () => {
+            let i = getCurrentIndex();
+            i = (i + 1) % songs.length;
+            playMusic(songs[i], false);
+        });
+
+        // Initialize UI
+        function main() {
+            renderSongList();
+            // pre-load first track but don't autoplay
+            playMusic(songs[0], true);
+        }
+
+        main();
+    </script>
+
+</body>
+
+</html>
